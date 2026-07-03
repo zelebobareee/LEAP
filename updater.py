@@ -25,24 +25,22 @@ HEADERS = {
 }
 
 
-def extract_public_key(url_or_key):
-    """Извлекает идентификатор публичной папки из ссылки."""
+def resolve_public_key(url_or_key):
+    """Готовит значение параметра public_key для API Яндекс.Диска.
+
+    Важно: для современных коротких ссылок вида https://disk.yandex.ru/d/xxxxx
+    API принимает только ПОЛНУЮ ссылку в качестве public_key — сегмент после
+    "/d/" сам по себе не является тем внутренним хэшем, который ожидает API,
+    и его передача отдельно приводит к HTTP 404 DiskNotFoundError даже для
+    корня папки. Поэтому если передана ссылка (а не голый ключ), она
+    используется целиком, без обрезки.
+    """
     if not url_or_key:
         return ""
-    # Если это уже короткий ключ (без слешей и домена)
-    if "/" not in url_or_key and "?" not in url_or_key:
-        return url_or_key
-    # Если ссылка вида https://disk.yandex.ru/d/abc123
-    if "/d/" in url_or_key:
-        return url_or_key.split("/d/")[-1].split("?")[0]
-    # Если ссылка вида https://yandex.ru/disk/public/?hash=...
-    if "hash=" in url_or_key:
-        return url_or_key.split("hash=")[-1].split("&")[0]
-    # Если ничего не подошло, возвращаем как есть (надеемся на ключ)
-    return url_or_key
+    return url_or_key.strip()
 
 
-PUBLIC_KEY = extract_public_key(PUBLIC_URL)
+PUBLIC_KEY = resolve_public_key(PUBLIC_URL)
 
 
 class UpdaterApp(tk.Tk):
